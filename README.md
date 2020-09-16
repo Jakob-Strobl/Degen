@@ -9,7 +9,7 @@ Degen will exit Beta probably around the time I finish my website.
 
 ## Brief
 
-Degen is a simple static site generator written in TypeScript and uses Deno as the runtime environment.  
+Degen is a simple static site generator written in TypeScript and uses Deno as the runtime environment. Degen tries to find a good balance between KISS and being flexible/configurable.  
 The code is open source in case anyone might find it useful.
 
 ## Motivation
