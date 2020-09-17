@@ -31,7 +31,7 @@ If you happen to find this, I recommend the using other static site generators:
 
 Degen has two dependencies:
 
-1. Deno
+1. Deno + standard library
 2. Markdown-it (Likely to change if I find a Native Deno Module)
 
 ### Execution
