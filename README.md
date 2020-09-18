@@ -43,8 +43,8 @@ Degen has two dependencies:
 
 Currently, we need the flags --allow-read --allow-write --allow-env.
 
---allow-read --allow-write: Read markdown, template, and other files and write out rendered HTML files.  
---allow-env: This is used by Deno's ```require()``` (Node-compatibility interface), which is needed to use markdown-it Node module.
+```--allow-read & --allow-write```: Read markdown, template, and other files and write out rendered HTML files.  
+```--allow-env```: This is used by Deno's ```require()``` (Node-compatibility interface), which is needed to use markdown-it Node module.
 
 ### Current Issues
 
@@ -52,4 +52,4 @@ Currently, we need the flags --allow-read --allow-write --allow-env.
 - Update my tests
 - Add more tests
 - Resolve all TODOs
-- And the other issues on my Trello board
+- And many more issues on my Trello board
