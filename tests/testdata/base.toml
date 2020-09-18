@@ -1,0 +1,27 @@
+# Statis internal runtime settings 
+[settings.degen]
+# TODO this is currently not being used right now, just to show toml config structure 
+printWarningHeaderPropertyNotFound = true    
+printWarningHeaderPropertyNoRules = true
+
+# Pages are the quick files a user can write to be generated 
+[settings.pages]
+source_path = 'source/'
+export_path = "export/"
+
+# source directory = export dir
+# will pass through all non .md files
+[settings.passthrough]
+"demo/img/" = "demo_export/img/"
+"demo/css/" = "demo_export/css/"
+
+# Page Types (Types of Content to Generate into a final html file)
+# Default properties for each Statis Page Type
+#   - is_public: if true, the site will be generated, else, it will not be generated or written
+#   - tempalte: template to use
+#   - title: html <title>
+[pages.default]
+is_public = false
+title = "TITLE NOT SET"
+template = "source/simple_template.html"
+date = "created"
