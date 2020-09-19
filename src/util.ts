@@ -1,5 +1,7 @@
+import * as Path from "https://deno.land/std@0.69.0/path/mod.ts";
 import { parse as parseToml } from "https://deno.land/std@0.69.0/encoding/toml.ts"; 
 import { ensureDirSync } from "https://deno.land/std@0.69.0/fs/mod.ts"
+
 import * as Degen from "./lib.ts";
 import { Pages } from "./pages.ts";
 
@@ -7,6 +9,7 @@ import { Pages } from "./pages.ts";
 export module Util {    
     export let config: Degen.ProjectConfig | null = null;
 
+    // TODO refactor errors as well with TemplateErrors
     export function createError(error_code: Degen.ErrorCode, filename: string, msg: string) {
         return Error(`ERROR [${error_code}]: In '${filename}', ${msg}`);
     }
@@ -59,7 +62,16 @@ export module Util {
         return page_entries;
     }
 
-    export async function getStatisTomlConfig(path: string) : Promise<Degen.ProjectConfig> {
+    export async function openProjectConfig(path: string) {
+        const config = await getProjectConfig(path);
+        const config_dir = Path.dirname(Deno.realPathSync(path));
+        console.log(`Changing working directory to project config ${config_dir}`);
+        Deno.chdir(config_dir);
+
+        return config;
+    } 
+
+    export async function getProjectConfig(path: string) : Promise<Degen.ProjectConfig> {
         if (!config)
             config = <Degen.ProjectConfig> <unknown> parseToml(await Util.readFile(path));
             

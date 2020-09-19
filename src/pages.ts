@@ -1,15 +1,21 @@
+import * as Path from "https://deno.land/std@0.69.0/path/mod.ts";
+import { parse as parseToml } from "https://deno.land/std@0.69.0/encoding/toml.ts";
+
 import * as Degen from "./lib.ts"; 
 import { Util } from "./util.ts";
 
+
+const INDEX_OF_TOML_HEADER = 1;
+const INDEX_OF_MARKDOWN = 2;
 
 export module Pages {
     // Key-values here are essential for Pages to function without error
     export interface PageDataFields extends Degen.StringIndexableObject<any> {
         page_type: string;
         filename: string;
-        file_path: string;
+        page_path: string;
         body: string;
-        template_path: string;
+        template: string;
         is_public: boolean;
         export_path: string;
         url: string;
@@ -26,21 +32,60 @@ export module Pages {
         markdown: string;
     }
 
-    export function createPage(toml_header: Degen.StringIndexableObject<any>, filename: string, markdown: string, config: Degen.ProjectConfig) : Page  {
-        if (Object.keys(toml_header).length !== 1) {
-            throw Util.createError(Degen.ErrorCode.PAGE_HEADER_MISCONFIGURED, 
-                filename, 
-                "page header must contain one table to define its type: [post], [project], etc");
+    export function parsePage(page_text: string, page_filepath: string, config: Degen.ProjectConfig) : Pages.Page {
+        if (page_text.length === 0) {
+            throw new Error(`Degen was given an empty page to parse: ${page_filepath}`);
         }
 
-        const page_type = Object.keys(toml_header)[0];
+        const {toml_header, markdown} = splitTomlHeaderAndMarkdown(page_text);
+        const page = Pages.createPage(toml_header, page_filepath, markdown, config);
+        return page
+    }
+
+    export function splitTomlHeaderAndMarkdown(page_text: string) : Pages.MarkdownPage {
+        const page_pieces =  page_text.split('---'); // 0 - empty, 1 - header, 2 - body 
+        if (page_pieces.length !== 3) {
+            throw Error("Page header is not formatted correctly.");
+        }
+
+        const toml_header = <Degen.StringIndexableObject<any>> parseToml(page_pieces[INDEX_OF_TOML_HEADER]); 
+        return {
+            toml_header,
+            markdown: page_pieces[INDEX_OF_MARKDOWN]
+        };
+    }
+
+    // TODO add documentation for this function 
+    // TODO refactor path and name into one of Deno's file path objects 
+    export function createPage(toml_header: Degen.StringIndexableObject<any>, page_absolute_path: string, markdown: string, config: Degen.ProjectConfig) : Page  {
+        if (Object.keys(toml_header).length !== 1) {
+            throw Util.createError(Degen.ErrorCode.PAGE_HEADER_MISCONFIGURED, 
+                page_absolute_path, 
+                "page header must contain one table to define its type: [post], [project], etc");
+        }
+        
+        const page_type = Object.keys(toml_header)[0]; // Page type should always be the first and only parent property in the toml header
         const header = toml_header[page_type];
-        header["filename"] = filename.match(/\w+.md/)?.toString();
-        header["file_path"] = filename;
+        header["filename"] = Path.basename(page_absolute_path);
+        header["page_path"] = page_absolute_path;
         header["page_type"] = page_type;
-        header["source_path"] = Deno.realPathSync(config.settings.pages.source_directory);
-        header["relative_export_path"] = Deno.realPathSync(config.settings.pages.export_path);
         header["markdown"] = markdown;
+        try {
+            // If path doesnt exist, throws OS error
+            header["base_source_path"] = Deno.realPathSync(config.settings.pages.source_path);
+        } catch (e) {
+            console.error(`ERROR: Project Config's 'source_path' could not be found: ${config.settings.pages.source_path}`);
+            console.error(e);
+            Deno.exit();
+        }
+        try {
+            // If path doesnt exist, throws OS error
+            header["base_export_path"] = Deno.realPathSync(config.settings.pages.export_path);
+        } catch (e) {
+            console.error(`ERROR: Project Config's 'export_path' could not be found: ${config.settings.pages.export_path}`);
+            console.error(e);
+            Deno.exit();
+        }
         const page = new Page(header, config.pages);
         return page;
     }
@@ -68,25 +113,19 @@ export module Pages {
             return this._data;
         }
 
-        getRelativeSourcePath() {
-            return this._data.file_path.split(this._data.source_path)[1];
-        }
-
-        getFilePathDir() {
-            let path = this._data.filename.match(/.+[^\w.md]/);
-            if (path) {
-                return path[0];
-            } else {
-                throw Error("getExportDir did not match regular expression");
-            }
-        }
-
         getFilename() {
             return this._data.filename;
         }
 
-        getExportFilename() {
-            return this._data.filename.replace('.md', '.html');
+        getRelativeSourcePath() {
+            const file_path = this.get('page_path');
+            const base_path = this.get('base_source_path');
+            const leftover_path = file_path.split(base_path);
+            if (leftover_path.length !== 2) {
+                throw Error(`Relative Source Path could not be determined:\n${leftover_path}`)
+            }
+            
+            return leftover_path[1];
         }
 
         getExportDir() {
@@ -94,7 +133,7 @@ export module Pages {
             if (path) {
                 return path[0];
             } else {
-                throw Error("getExportDir did not match regular expression");
+                throw Error("getExportDir() did not match regular expression");
             }
         }
         
@@ -104,7 +143,7 @@ export module Pages {
                 return this._data[key];
             } else {
                 throw Util.createError(Degen.ErrorCode.PAGE_HEADER_KEY_VALUE_DNE, 
-                    this._data['file_path'],
+                    this._data['page_path'],
                     `key '${key}' does not exist in the header.`);
             }
         }
@@ -139,7 +178,7 @@ export module Pages {
                 if ( !(key in this._data) ) {
                     // populate with default property 
                     this.set(key, defaults[key]);
-                    console.warn(`WARN: In ${this._data.page_type.toUpperCase()} - '${this.get('file_path')}', "${key}" was not found in the header.\n\tLoading default: "${this.get(key)}"\n`);
+                    console.warn(`WARN: In ${this._data.page_type.toUpperCase()} - '${this.get('page_path')}', "${key}" was not found in the header.\n\tLoading default: "${this.get(key)}"\n`);
                 }
             }
         }
@@ -149,13 +188,13 @@ export module Pages {
          * @param key the key you want to check 
          */
         private validateHeaderProperty(key: string) {        
-            let file_path: string = this.get('file_path');
+            let page_path: string = this.get('page_path');
             switch (key) {
                 // Add rules for properties in here!
                 case "is_public": {
                     if (typeof this.get(key) !== 'boolean') {
                         throw Util.createError(Degen.ErrorCode.ERROR, 
-                            file_path, 
+                            page_path, 
                             'is_public must be a boolean.');
                     }
                     break;
@@ -174,7 +213,7 @@ export module Pages {
                         let date_regx = RegExp(/modified|created/i);
                         if ( !date_regx.test(date) ) {
                             throw Util.createError(Degen.ErrorCode.ERROR,
-                                file_path,
+                                page_path,
                                 `date property must be either "modified", "created", or in a Date() parseable format. Found: ${date}`);
                         }
                     }
@@ -182,7 +221,7 @@ export module Pages {
                 }
 
                 default: {
-                    console.warn(`WARN: In ${this._data.page_type.toUpperCase()} - '${file_path}', the key "${key}" has no rules for parsing.\n\tYou can add a rule in lib.ts - PageHeader.validateHeaderProperty()\n`);
+                    console.warn(`WARN: In ${this._data.page_type.toUpperCase()} - '${page_path}', the key "${key}" has no rules for parsing.\n\tYou can add a rule in lib.ts - PageHeader.validateHeaderProperty()\n`);
                     break;
                 }
             }
@@ -196,21 +235,25 @@ export module Pages {
             // This syntax might look a little weird but its to encapsulate the variable namespace
             const relative_source_path = this.getRelativeSourcePath();
             { // export path - match the same file structure as the source
-                console.log(`relsrc: ${relative_source_path}`);
-                const export_path = this.get('relative_export_path');
-                const path = `${export_path}${relative_source_path.replace('.md', ".html")}`;
-                this.set('export_path', `${path}`); // Replace file extension with .html 
+                const path = this.get('base_export_path') + relative_source_path.replace('.md', '.html')
+                this.set('export_path', path); // Replace file extension with .html 
             }
             { // URL
-                const path = this.get('export_path').split(this.get('relative_export_path'))[1];
-                this.set('url', `${path}`);
+                const base_path = this.get('base_export_path');
+                const export_path = this.get('export_path');
+                const paths = export_path.split(base_path);
+                if (paths.length === 2) {
+                    this.set('url', paths[1]);
+                } else {
+                    throw Error("URL Path could not be determined");
+                }
             }
             { // Date
                 let date: any = this.get('date');
                 if ( !Date.parse(date) ) {
                     date = date.toLowerCase();
-                    const stats = Deno.statSync(this._data.file_path);
-                    if ( date === "created") {
+                    const stats = Deno.statSync(this._data.page_path);
+                    if (date === "created") {
                         this.set('date', stats.birthtime);
                     } else if (date === "modified") {
                         this.set('date', stats.mtime);
@@ -322,7 +365,7 @@ export module Pages {
         }
 
         exclude(current_page: Page) : PageCollection {
-            return this.filter((page: Page) => page.get('file_path') !== current_page.get('file_path'));
+            return this.filter((page: Page) => page.get('page_path') !== current_page.get('page_path'));
         }
 
         // Filter PageCollection

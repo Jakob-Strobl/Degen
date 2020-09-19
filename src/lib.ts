@@ -22,7 +22,7 @@ export interface DegenSettings {
 }
 
 export interface PageSettings {
-    source_directory: string;
+    source_path: string;
     export_path: string;
 }
 

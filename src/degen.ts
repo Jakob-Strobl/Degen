@@ -1,26 +1,35 @@
 import { createRequire } from "https://deno.land/std@0.69.0/node/module.ts";
 import { ensureDirSync, copySync } from "https://deno.land/std@0.69.0/fs/mod.ts"
+
 import { Util } from "./util.ts";
 import { Pages } from "./pages.ts"
-import { Header } from "./header.ts";
 import { Temple } from "./temple.ts";
 
-async function main () {
-    // Initialization - read in config file and instantiate required functionality 
-    const config_filepath = "degen.toml";
-    const config = await Util.getStatisTomlConfig(config_filepath);
+async function main() {
+    if (Deno.args.length === 1) {
+        await generate(Deno.args[0]);
+    } else {
+        console.log("Please provide path to project config file.");
+    }
+}
 
+async function generate(project_config_path: string) {
     // I dont like that I need a pseudo require() to mimick node.js importing D: 
     // But im glad node modules are supported
     const require = createRequire(import.meta.url);
-    const markit = require('./markdown-it.js')({
+    const markit = require('../dependencies/markdown-it.js')({
         html: true,    // Enable HTML tags in source // TODO make configurable in statis.toml
     });
 
+    // Initialization - read in config file and instantiate required functionality 
+    const config = await Util.openProjectConfig(project_config_path);
+
     console.log(config);
+    // Change Deno's working directory to the directory of the project_config_path
+
 
     // Find all the pages in the directories declared in statis.toml - settings.pages
-    const source_directory = Deno.realPathSync(config.settings.pages.source_directory);
+    const source_directory = Deno.realPathSync(config.settings.pages.source_path);
     console.log(source_directory);
     const page_entries = Util.getSetOfAllPageEntries([source_directory]);
     const page_render_queue = new Array<Pages.Page>();
@@ -30,7 +39,7 @@ async function main () {
     try {
         for await (const page of page_entries) {
             const page_text = await Util.readFile(page)
-            const statis_page = Header.parseStatisPage(page_text, page, config);
+            const statis_page = Pages.parsePage(page_text, page, config);
 
             // If public add to the array of public pages
             if (statis_page.get('is_public')) {

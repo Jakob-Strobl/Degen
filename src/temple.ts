@@ -95,7 +95,7 @@ export module Temple {
     }
 
     export async function render(page_data: Pages.Page, compendium: Pages.Compendium) {
-        const template = await readInTemplate(page_data.get('template_path')); 
+        const template = await readInTemplate(page_data.get('template')); 
         return renderString(template, page_data, compendium);
     }
 }

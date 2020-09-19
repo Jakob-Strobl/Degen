@@ -6,7 +6,6 @@ import * as Path from "https://deno.land/std@0.69.0/path/mod.ts";
 
 import { Util } from "../src/util.ts";
 import { Pages } from "../src/pages.ts"
-import { Header } from "../src/header.ts";
 import { Temple } from "../src/temple.ts"
 
 const moduleDir = Path.dirname(Path.fromFileUrl(import.meta.url));
@@ -24,7 +23,7 @@ Deno.test({
 
         const config = await Util.openProjectConfig(Path.resolve(testdataDir, "base.toml"));
         const page_content = await Util.readFile(Path.join(testdataDir, "source/post.md"));
-        const page = Header.parsePage(page_content, Deno.realPathSync('source/post.md'), config);
+        const page = Pages.parsePage(page_content, Deno.realPathSync('source/post.md'), config);
 
         const result = Temple.renderString(string, page, new Pages.Compendium());
         assertEquals(result, expected, "Result should be unchanged.")
@@ -39,7 +38,7 @@ Deno.test({
 
         const config = await Util.openProjectConfig(Path.resolve(testdataDir, "base.toml"));
         const page_content = await Util.readFile(Path.join(testdataDir, "source/post.md"));
-        const page = Header.parsePage(page_content, Deno.realPathSync('source/post.md'), config);
+        const page = Pages.parsePage(page_content, Deno.realPathSync('source/post.md'), config);
 
         const result = Temple.renderString(string, page, new Pages.Compendium());
         assertEquals(result, expected, "Template Var Title should be replaced with the page content")
@@ -54,7 +53,7 @@ Deno.test({
 
             const config = await Util.openProjectConfig(Path.resolve(testdataDir, "base.toml"));
             const page_content = await Util.readFile(Path.join(testdataDir, "source/post.md"));
-            const page = Header.parsePage(page_content, Deno.realPathSync('source/post.md'), config);
+            const page = Pages.parsePage(page_content, Deno.realPathSync('source/post.md'), config);
 
             const result = Temple.renderString(string, page, new Pages.Compendium());
             // Error should be thrown 
@@ -72,7 +71,7 @@ Deno.test({
 
         const config = await Util.openProjectConfig(Path.resolve(testdataDir, "base.toml"));
         const page_content = await Util.readFile(Path.join(testdataDir, "source/post3.md"));
-        const page = Header.parsePage(page_content, Deno.realPathSync('source/post3.md'), config);
+        const page = Pages.parsePage(page_content, Deno.realPathSync('source/post3.md'), config);
 
         const rendered = await Temple.render(page, new Pages.Compendium());
         assertEquals(ignoreWhiteSpace(rendered), expected);
@@ -86,7 +85,7 @@ Deno.test({
 
         const config = await Util.openProjectConfig(Path.resolve(testdataDir, "base.toml"));
         const page_content = await Util.readFile(Path.join(testdataDir, "source/post.md"));
-        const page = Header.parsePage(page_content, Deno.realPathSync('source/post.md'), config);
+        const page = Pages.parsePage(page_content, Deno.realPathSync('source/post.md'), config);
 
         const rendered = await Temple.render(page, new Pages.Compendium());
         assertEquals(ignoreWhiteSpace(rendered), expected);
@@ -100,7 +99,7 @@ Deno.test({
 
         const config = await Util.openProjectConfig(Path.resolve(testdataDir, "base.toml"));
         const page_content = await Util.readFile(Path.join(testdataDir, "source/post2.md"));
-        const page = Header.parsePage(page_content, Deno.realPathSync('source/post2.md'), config);
+        const page = Pages.parsePage(page_content, Deno.realPathSync('source/post2.md'), config);
 
         const rendered = await Temple.render(page, new Pages.Compendium());
         assertEquals(ignoreWhiteSpace(rendered), expected);
