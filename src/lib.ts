@@ -19,6 +19,7 @@ export interface Settings {
 
 export interface DegenSettings {
     printTomlHeaderWarnings: boolean;
+    enable_html_in_markdown: boolean;
 }
 
 export interface PageSettings {

@@ -27,12 +27,14 @@ async function generate(project_config_path: string) {
     // I dont like that I need a pseudo require() to mimick node.js importing D: 
     // But im glad node modules are supported
     const require = createRequire(import.meta.url);
-    const markit = require('../dependencies/markdown-it.js')({
-        html: true,    // Enable HTML tags in source // TODO make configurable in statis.toml
-    });
+    const markit_mod = require('../dependencies/markdown-it.js');
 
     // Initialization - read in config file and instantiate required functionality 
     const config = await Util.openProjectConfig(project_config_path);
+
+    const markit = markit_mod({
+        html: config.settings.degen.enable_html_in_markdown,    // Enable HTML tags in source
+    });
 
     console.log(config);
     // Change Deno's working directory to the directory of the project_config_path
