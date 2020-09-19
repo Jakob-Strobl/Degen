@@ -1,3 +1,4 @@
+import * as Path from "https://deno.land/std@0.69.0/path/mod.ts";
 import { createRequire } from "https://deno.land/std@0.69.0/node/module.ts";
 import { ensureDirSync, copySync } from "https://deno.land/std@0.69.0/fs/mod.ts"
 
@@ -7,7 +8,16 @@ import { Temple } from "./temple.ts";
 
 async function main() {
     if (Deno.args.length === 1) {
-        await generate(Deno.args[0]);
+        let path;
+        try {
+            path = Deno.realPathSync(Deno.args[0]);
+        } catch (e: unknown) {
+            console.error(`Error: Project Config could not be found: Attempted to find path ${Path.resolve(Deno.cwd(), Deno.args[0])}`);
+            console.error(e);
+            Deno.exit(1);
+        }
+
+        await generate(path);
     } else {
         console.log("Please provide path to project config file.");
     }
