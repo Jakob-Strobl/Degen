@@ -71,9 +71,14 @@ export module Util {
         return config;
     } 
 
-    export async function getProjectConfig(path: string) : Promise<Degen.ProjectConfig> {
-        if (!config)
-            config = <Degen.ProjectConfig> <unknown> parseToml(await Util.readFile(path));
+    export async function getProjectConfig(path?: string) : Promise<Degen.ProjectConfig> {
+        if (!config) {
+            if (!path) {
+                throw new Error("Project config does not exist and no path was given.");
+            } else {
+                config = <Degen.ProjectConfig> <unknown> parseToml(await Util.readFile(path));
+            }
+        }
             
         return config;
     }
