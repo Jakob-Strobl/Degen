@@ -1,11 +1,3 @@
-// TODO refactor ErrorCode
-export enum ErrorCode {
-    ERROR                       = -1,
-    PAGE_HEADER_UNDEFINED       = 1,
-    PAGE_HEADER_MISCONFIGURED   = 2,
-    PAGE_HEADER_KEY_VALUE_DNE   = 3,
-}
-
 export interface ProjectConfig {
     settings: Settings;
     pages: PageTypes;
@@ -33,5 +25,12 @@ export interface PageTypes {
 
 export interface StringIndexableObject<T> {
     [key: string]: T;
+}
+
+export class DegenError extends Error {
+    constructor(error_code: string, msg?: string, source?: string) {
+        super(`[${error_code}] ${msg} >> ${source}`);
+        this.name = "DegenError";
+    }
 }
 

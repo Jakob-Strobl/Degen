@@ -9,11 +9,6 @@ import { Pages } from "./pages.ts";
 export module Util {    
     export let config: Degen.ProjectConfig | null = null;
 
-    // TODO refactor errors as well with TemplateErrors
-    export function createError(error_code: Degen.ErrorCode, filename: string, msg: string) {
-        return Error(`ERROR [${error_code}]: In '${filename}', ${msg}`);
-    }
-
     export async function readFile(absolute_path: string) : Promise<string> {
         const decoder = new TextDecoder("utf-8");
         return decoder.decode(await Deno.readFile(absolute_path));

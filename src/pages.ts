@@ -32,9 +32,17 @@ export module Pages {
         markdown: string;
     }
 
+    export class PageError extends Degen.DegenError {
+        constructor(error_code: string, msg: string, page: string) {
+            super(error_code, msg, page);
+            this.name = "PageError";
+        }
+    }
+
     export function parsePage(page_text: string, page_path: string, config: Degen.ProjectConfig) : Pages.Page {
         if (page_text.length === 0) {
-            throw new Error(`Degen was given an empty page to parse: ${page_path}`);
+            // TODO update to PageError
+            throw new Error(`Degen was given an empty page to parse: ${page_path}`); // P101
         }
 
         const {toml_header, markdown} = splitTomlHeaderAndMarkdown(page_text, page_path);
@@ -45,7 +53,8 @@ export module Pages {
     export function splitTomlHeaderAndMarkdown(page_text: string, page_path: string) : Pages.MarkdownPage {
         const page_pieces =  page_text.split('---'); // 0 - empty, 1 - header, 2 - body 
         if (page_pieces.length !== 3) {
-            throw Error(`Page header is not formatted correctly: ${page_path}`);
+            // TODO update to PageError
+            throw Error(`Page header is not formatted correctly: ${page_path}`); // P102
         }
 
         const toml_header = <Degen.StringIndexableObject<any>> parseToml(page_pieces[INDEX_OF_TOML_HEADER]); 
@@ -59,9 +68,10 @@ export module Pages {
     // TODO refactor path and name into one of Deno's file path objects 
     export function createPage(toml_header: Degen.StringIndexableObject<any>, page_absolute_path: string, markdown: string, config: Degen.ProjectConfig) : Page  {
         if (Object.keys(toml_header).length !== 1) {
-            throw Util.createError(Degen.ErrorCode.PAGE_HEADER_MISCONFIGURED, 
-                page_absolute_path, 
-                "page header must contain one table to define its type: [post], [project], etc");
+            throw new PageError(
+                "P103", 
+                "Page Header Misconfigured; A page must contain one table to define its type: [post], etc", 
+                page_absolute_path);
         }
         
         const page_type = Object.keys(toml_header)[0]; // Page type should always be the first and only parent property in the toml header
@@ -142,9 +152,10 @@ export module Pages {
             if (this.isValidKey(key)) {
                 return this._data[key];
             } else {
-                throw Util.createError(Degen.ErrorCode.PAGE_HEADER_KEY_VALUE_DNE, 
-                    this._data['page_path'],
-                    `key '${key}' does not exist in the header.`);
+                throw new PageError(
+                    "P200", 
+                    `key '${key}' does not exist in the header.`,
+                    this._data['page_path']);
             }
         }
 
@@ -193,13 +204,13 @@ export module Pages {
                 // Add rules for properties in here!
                 case "is_public": {
                     if (typeof this.get(key) !== 'boolean') {
-                        throw Util.createError(Degen.ErrorCode.ERROR, 
-                            page_path, 
-                            'is_public must be a boolean.');
+                        throw new PageError(
+                            "P300", 
+                            "'is_public' page property must be a boolean",
+                            page_path);
                     }
                     break;
                 }
-
                 case "date": {
                     const date = this.get(key);
                     console.log
@@ -212,9 +223,10 @@ export module Pages {
                         // Check if it is 'modified', 'created'
                         let date_regx = RegExp(/modified|created/i);
                         if ( !date_regx.test(date) ) {
-                            throw Util.createError(Degen.ErrorCode.ERROR,
-                                page_path,
-                                `date property must be either "modified", "created", or in a Date() parseable format. Found: ${date}`);
+                            throw new PageError(
+                                "P301",
+                                `'date' page property must be either "modified", "created", or in a Date() parseable format. Found "${date}"`,
+                                page_path);
                         }
                     }
                     break;
@@ -245,6 +257,7 @@ export module Pages {
                 if (paths.length === 2) {
                     this.set('url', paths[1]);
                 } else {
+                    // TODO update to PageError
                     throw Error("URL Path could not be determined");
                 }
             }
@@ -272,7 +285,6 @@ export module Pages {
 
     // Intermediate representation of a page
     export class Page extends PageData {
-        // TODO this constructor is actually awful and isnt flexible
         constructor(header: Degen.StringIndexableObject<any>, default_header?: Degen.PageTypes) {
             const page_header = <PageDataFields> {
                 ...header, // spread/expand the TomlHeader object

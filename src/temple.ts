@@ -1,19 +1,18 @@
+import * as Degen from "./lib.ts"; 
 import { Util } from "./util.ts";
 import { Pages } from "./pages.ts";
 
 // Template Errors
-// TODO refactor Template Errrors
-export class TemplateError extends Error {
-    constructor(error: string) {
-        super(`Template Error: ${error}`);
+export class TemplateError extends Degen.DegenError {
+    constructor(error_code: string, msg: string, page: string, template: string) {
+        super(error_code, msg, `${page} via ${template}`);
         this.name = "TemplateError";
     }
 }
 
-export class TemplateVariableDoesNotExistError extends TemplateError {
-    constructor(template_variable: string) {
-        super(`Template Variable '${template_variable}', binds to an undefined property.`);
-        this.name = "TemplateVariableDoesNotExistError";
+export class TemplateVariableUndefined extends TemplateError {
+    constructor(template_variable: string, page: string, template: string) {
+        super("T111", `Template Variable '${template_variable}', binds to an undefined property`, page, template);
     }
 }
 
@@ -51,7 +50,7 @@ export module Temple {
                         return var_data;
                     }
                 } else { 
-                    throw new TemplateVariableDoesNotExistError(variable);
+                    throw new TemplateVariableUndefined(variable, page.get('page_path'), page.get('template'));
                 }
             }
 
