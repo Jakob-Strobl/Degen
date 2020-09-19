@@ -32,20 +32,20 @@ export module Pages {
         markdown: string;
     }
 
-    export function parsePage(page_text: string, page_filepath: string, config: Degen.ProjectConfig) : Pages.Page {
+    export function parsePage(page_text: string, page_path: string, config: Degen.ProjectConfig) : Pages.Page {
         if (page_text.length === 0) {
-            throw new Error(`Degen was given an empty page to parse: ${page_filepath}`);
+            throw new Error(`Degen was given an empty page to parse: ${page_path}`);
         }
 
-        const {toml_header, markdown} = splitTomlHeaderAndMarkdown(page_text);
-        const page = Pages.createPage(toml_header, page_filepath, markdown, config);
+        const {toml_header, markdown} = splitTomlHeaderAndMarkdown(page_text, page_path);
+        const page = Pages.createPage(toml_header, page_path, markdown, config);
         return page
     }
 
-    export function splitTomlHeaderAndMarkdown(page_text: string) : Pages.MarkdownPage {
+    export function splitTomlHeaderAndMarkdown(page_text: string, page_path: string) : Pages.MarkdownPage {
         const page_pieces =  page_text.split('---'); // 0 - empty, 1 - header, 2 - body 
         if (page_pieces.length !== 3) {
-            throw Error("Page header is not formatted correctly.");
+            throw Error(`Page header is not formatted correctly: ${page_path}`);
         }
 
         const toml_header = <Degen.StringIndexableObject<any>> parseToml(page_pieces[INDEX_OF_TOML_HEADER]); 
