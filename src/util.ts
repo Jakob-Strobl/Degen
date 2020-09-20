@@ -7,7 +7,7 @@ import { Pages } from "./pages.ts";
 
 
 export module Util {    
-    export let config: Degen.ProjectConfig | null = null;
+    let config: Degen.ProjectConfig | null = null;
 
     export async function readFile(absolute_path: string) : Promise<string> {
         const decoder = new TextDecoder("utf-8");
@@ -15,7 +15,7 @@ export module Util {
     }
 
     export async function writePage(utf8: string, page: Pages.Page ) {
-        const export_dir = page.getExportDir();
+        const export_dir = page.getExportBasename();
         const export_path = page.get('export_path');
         ensureDirSync(export_dir);
         console.log(`writing file to: ${export_path}`);
