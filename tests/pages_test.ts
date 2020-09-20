@@ -22,9 +22,9 @@ Deno.test({
             const page = Pages.parsePage(page_content, Deno.realPathSync('source/post_empty.md'), config);
             console.log(page.getData());
         },
-        Error,
-        "Degen was given an empty page to parse:",
-        "");
+        Pages.PageError,
+        "[P101] Degen was given an empty page to parse",
+        "Degen should throw an error when given an empty page to parse.");
     }
 });
 
@@ -38,14 +38,14 @@ Deno.test({
             const page = Pages.parsePage(page_content, Deno.realPathSync('source/post_no_header.md'), config);
             console.log(page.getData());
         },
-        Error,
-        "Page header is not formatted correctly:",
-        "");
+        Pages.PageError,
+        "[P102] Page header is not formatted correctly",
+        "Each page requires a header in order to work in the render pipeline.");
     }
 });
 
 Deno.test({
-    name: "Header - Split Markdown Page Meta Tags and Body",
+    name: "Pages - Split Markdown Page Meta Tags and Body",
     fn: async () => {
         const expected_header = {
             post: {
