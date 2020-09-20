@@ -5,21 +5,28 @@ import { ensureDirSync, copySync } from "https://deno.land/std@0.69.0/fs/mod.ts"
 import { Util } from "./util.ts";
 import { Pages } from "./pages.ts"
 import { Temple } from "./temple.ts";
+import { DegenError } from "./lib.ts";
 
 async function main() {
-    if (Deno.args.length === 1) {
-        let path;
-        try {
-            path = Deno.realPathSync(Deno.args[0]);
-        } catch (e: unknown) {
-            console.error(`Error: Project Config could not be found: Attempted to find path ${Path.resolve(Deno.cwd(), Deno.args[0])}`);
-            console.error(e);
-            Deno.exit(1);
-        }
+    try {
+        if (Deno.args.length === 1) {
+            let path;
+            try {
+                path = Deno.realPathSync(Deno.args[0]);
+            } catch (e: unknown) {
+                throw new DegenError(
+                    "D100",
+                    "Project Config could not be found",
+                    Path.resolve(Deno.cwd(), Deno.args[0])
+                );
+            }
 
-        await generate(path);
-    } else {
-        console.log("Please provide path to project config file.");
+            await generate(path);
+        } else {
+            console.log("Please provide path to project config file.");
+        }
+    } catch (e) {
+        console.log(e);
     }
 }
 
