@@ -6,7 +6,7 @@ import * as Path from "https://deno.land/std@0.69.0/path/mod.ts";
 
 import { Util } from "../src/util.ts";
 import { Pages } from "../src/pages.ts"
-import { Temple } from "../src/temple.ts"
+import { TemplateError, TemplateVariableUndefined, Temple } from "../src/temple.ts"
 
 const moduleDir = Path.dirname(Path.fromFileUrl(import.meta.url));
 const testdataDir = Path.resolve(moduleDir, "testdata");
@@ -48,8 +48,9 @@ Deno.test({
 Deno.test({
     name: "Temple: Template variable binds to undefined property",
     fn: async () => {
+        const variable = "titl"
         await assertThrowsAsync(async () => {
-            const string = "Insert title here: !{ titl } "; // example - user miss-spelled title
+            const string = `Insert title here: !{ ${variable} } `; // example - user miss-spelled title
 
             const config = await Util.openProjectConfig(Path.resolve(testdataDir, "base.toml"));
             const page_content = await Util.readFile(Path.join(testdataDir, "source/post.md"));
@@ -58,8 +59,8 @@ Deno.test({
             const result = Temple.renderString(string, page, new Pages.Compendium());
             // Error should be thrown 
         }, 
-        Error,
-        "Template Variable 'titl', binds to an undefined property",
+        TemplateVariableUndefined,
+        `[T200] Template Variable '${variable}', binds to an undefined property`,
         "If a template variable is undefined, renderString() should throw an error.");
     }
 });

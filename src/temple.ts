@@ -12,7 +12,7 @@ export class TemplateError extends Degen.DegenError {
 
 export class TemplateVariableUndefined extends TemplateError {
     constructor(template_variable: string, page: string, template: string) {
-        super("T111", `Template Variable '${template_variable}', binds to an undefined property`, page, template);
+        super("T200", `Template Variable '${template_variable}', binds to an undefined property`, page, template);
     }
 }
 
@@ -41,6 +41,7 @@ export module Temple {
                 if (variable in page.getData()) {
                     const var_data = page.get(variable);
                     if (calls) {
+                        // If there are functions called, execute the functions on the variable
                         const renderVariableExpression = new Function(
                             "variable",
                             `return variable${calls};`
@@ -61,8 +62,12 @@ export module Temple {
                 const expr_regex = regexs.expression;
                 const m = expr.match(expr_regex);
                 if (!m || !m.groups) {
-                    console.log("Regex Collection not found");
-                    return match;
+                    throw new TemplateError(
+                        "T300",
+                        "Template Expression Regex did not match for named groups",
+                        page.get('page_path'),
+                        page.get('template')
+                    );
                 }
 
                 // Create dynamic function to execute
@@ -76,12 +81,11 @@ export module Temple {
                 );
                 
                 // Call dynamic function to render
-                const out : Pages.PageCollection = renderExpression(compendium, collection, page);
+                const out : string = renderExpression(compendium, collection, page);
                 return out;
             }
 
             let output = template;
-
             // Parse template variables 
             output = output.replace(regexs.template_variable_decleration, parseTemplateVariables);
             // Parse template expressions
