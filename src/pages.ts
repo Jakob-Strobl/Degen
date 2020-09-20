@@ -163,8 +163,8 @@ export module Pages {
             return leftover_path[1];
         }
 
-        getExportBasename() {
-            return Path.basename(this.get("export_path"));
+        getExportDirname() {
+            return Path.dirname(this.get("export_path"));
         }
 
         finalizeHeader(page_defaults?: Degen.PageTypes) {

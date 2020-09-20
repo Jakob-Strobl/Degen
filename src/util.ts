@@ -15,10 +15,10 @@ export module Util {
     }
 
     export async function writePage(utf8: string, page: Pages.Page ) {
-        const export_dir = page.getExportBasename();
+        const export_dir = page.getExportDirname();
         const export_path = page.get('export_path');
         ensureDirSync(export_dir);
-        console.log(`writing file to: ${export_path}`);
+        console.log(`writing file to: ${export_path} via ${export_dir}`);
 
         const encoder = new TextEncoder();
         const data = encoder.encode(utf8);
