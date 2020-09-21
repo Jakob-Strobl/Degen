@@ -1,0 +1,42 @@
+# Statis internal runtime settings 
+[settings.degen]
+enable_html_in_markdown = true 
+
+# TODO this is currently not being used right now, just to show toml config structure 
+printWarningHeaderPropertyNotFound = true    
+printWarningHeaderPropertyNoRules = true
+
+# Pages are the quick files a user can write to be generated 
+[settings.pages]
+source_path = "source/"
+export_path = "export/"
+
+# source directory = export dir
+# will pass through all non .md files
+[settings.passthrough]
+"source/css/" = "export/css/"
+
+# Page Types (Types of Content to Generate into a final html file)
+#   - Project
+#   - Post 
+# Default properties for each Statis Page Type
+#   - is_public: if true, the site will be generated, else, it will not be generated or written
+#   - tempalte: template to use
+#   - title: html <title>
+[pages.default]
+is_public = false
+title = "TITLE NOT SET"
+template = "templates/library.html"
+date = "created"
+
+[pages.albums]
+is_public = false
+title = "ALBUM TITLE NOT SET"
+template = "templates/album.html"
+date = "created"
+
+[pages.singles]
+is_public = false
+title = "SINGLE TITLE NOT SET"
+template = "templates/album.html"
+date = "created"
