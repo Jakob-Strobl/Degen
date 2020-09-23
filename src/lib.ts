@@ -1,23 +1,21 @@
 export interface ProjectConfig {
-    settings: Settings;
-    pages: PageTypes;
-}
-    
-export interface Settings {
     degen: DegenSettings;
-    pages: PageSettings;
-    passthrough: StringIndexableObject<string>;
+    project: ProjectSettings;
+    pages: PageTypes;
 }
 
 export interface DegenSettings {
-    printTomlHeaderWarnings: boolean;
     enable_html_in_markdown: boolean;
+    warn_page_property_loads_default: boolean;
+    warn_page_property_no_validation_rule: boolean;
+    log_write_rendered_html: boolean;
 }
 
-export interface PageSettings {
+export interface ProjectSettings {
     domain_url: string;
     source_path: string;
     export_path: string;
+    passthrough: StringIndexableObject<string>;
 }
 
 export interface PageTypes {
