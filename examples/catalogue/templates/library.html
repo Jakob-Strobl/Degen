@@ -42,7 +42,7 @@
     <ul>
       !{{ 
         albums
-        .sort('date', false)
+        .sort('date', true)
         .render((page) => {
             return `<li class="four columns post-card" style="background-image: url(${page.get('art_link')});"><a href="${page.url()}">${page.get('title')}</a></p></li>`;
         })

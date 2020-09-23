@@ -2,6 +2,7 @@ import * as Path from "https://deno.land/std@0.69.0/path/mod.ts";
 import { parse as parseToml } from "https://deno.land/std@0.69.0/encoding/toml.ts";
 
 import * as Degen from "./lib.ts"; 
+import { Util } from "./util.ts";
 
 const INDEX_OF_TOML_HEADER = 1;
 const INDEX_OF_MARKDOWN = 2;
@@ -82,29 +83,29 @@ export module Pages {
         header["page_path"] = page_absolute_path;
         header["page_type"] = page_type;
         header["markdown"] = markdown;
-        header["domain_url"] = config.settings.pages.domain_url;
+        header["domain_url"] = config.project.domain_url;
         try {
             // If path doesnt exist, throws OS error
-            header["base_source_path"] = Deno.realPathSync(config.settings.pages.source_path);
+            header["base_source_path"] = Deno.realPathSync(config.project.source_path);
         } catch (e) {
             throw new PageError(
                 "P104",
-                `Project Config's 'source_path' could not be found - ${config.settings.pages.source_path}`,
+                `Project Config's 'source_path' could not be found - ${config.project.source_path}`,
                 page_absolute_path
             )
         }
         try {
             // If path doesnt exist, throws OS error
-            header["base_export_path"] = Deno.realPathSync(config.settings.pages.export_path);
+            header["base_export_path"] = Deno.realPathSync(config.project.export_path);
         } catch (e) {
             console.log(e);
             throw new PageError(
                 "P105",
-                `Project Config's 'export_path' could not be found: ${config.settings.pages.export_path}`,
+                `Project Config's 'export_path' could not be found: ${config.project.export_path}`,
                 page_absolute_path
             )
         }
-        const page = new Page(header, config.pages);
+        const page = new Page(header);
         return page;
     }
 
@@ -169,33 +170,38 @@ export module Pages {
             return Path.dirname(this.get("export_path"));
         }
 
-        finalizeHeader(page_defaults?: Degen.PageTypes) {
+        finalizeHeader() {
+            const config = Util.getProjectConfigSync(); // Get project config so we know to print warnings
+            const page_defaults = config.pages;
             const page_type = this.get('page_type');
+            
             if (page_defaults) {
                 // Check if header's page type exists in page default types
                 if (page_type in page_defaults) {
-                    this.populateDefaultProperties(page_defaults[page_type]);
+                    this.populateDefaultProperties(page_defaults[page_type], config.degen);
                 } else {
                     // Use default page type
-                    this.populateDefaultProperties(page_defaults.default);
+                    this.populateDefaultProperties(page_defaults.default, config.degen);
                 }
             }
             
             // validate all properties in this header 
             for (const key in this._data) {
-                this.validateHeaderProperty(key);
+                this.validateHeaderProperty(key, config.degen);
             }
 
             this.inferProperties();
         }
 
-        private populateDefaultProperties(defaults: any) {
+        private populateDefaultProperties(defaults: any, degen_settings: Degen.DegenSettings) {
             // Load default values if property is empty
             for (const key in defaults) {
                 if ( !(key in this._data) ) {
                     // populate with default property 
                     this.set(key, defaults[key]);
-                    console.warn(`WARN: In ${this._data.page_type.toUpperCase()} - '${this.get('page_path')}', "${key}" was not found in the header.\n\tLoading default: "${this.get(key)}"\n`);
+                    if (degen_settings.warn_page_property_loads_default) {
+                        console.warn(`WARN: In ${this._data.page_type.toUpperCase()} - '${this.get('page_path')}', "${key}" was not found in the header.\n\tLoading default: "${this.get(key)}"\n`);
+                    }
                 }
             }
         }
@@ -204,7 +210,7 @@ export module Pages {
          * Update, validate, polish off header properties 
          * @param key the key you want to check 
          */
-        private validateHeaderProperty(key: string) {        
+        private validateHeaderProperty(key: string, degen_settings: Degen.DegenSettings) {        
             let page_path: string = this.get('page_path');
             switch (key) {
                 // Add rules for properties in here!
@@ -239,7 +245,9 @@ export module Pages {
                 }
 
                 default: {
-                    console.warn(`WARN: In ${this._data.page_type.toUpperCase()} - '${page_path}', the key "${key}" ${this.get(key)} has no rules for parsing.\n\tYou can add a rule in lib.ts - PageHeader.validateHeaderProperty()\n`);
+                    if (degen_settings.warn_page_property_no_validation_rule) {
+                        console.warn(`WARN: In ${this._data.page_type.toUpperCase()} - '${page_path}', the key "${key}" has no rules for parsing.\n\tYou can add a rule in lib.ts - PageHeader.validateHeaderProperty()\n`);
+                    }
                     break;
                 }
             }
@@ -293,12 +301,12 @@ export module Pages {
 
     // Intermediate representation of a page
     export class Page extends PageData {
-        constructor(header: Degen.StringIndexableObject<any>, default_header?: Degen.PageTypes) {
+        constructor(header: Degen.StringIndexableObject<any>) {
             const page_header = <PageDataFields> {
                 ...header, // spread/expand the TomlHeader object
             };
             super(page_header);
-            this.finalizeHeader(default_header);
+            this.finalizeHeader();
         }
 
         // QOL Convenience functions for better template expression readability

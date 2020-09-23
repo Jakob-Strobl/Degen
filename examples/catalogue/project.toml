@@ -1,20 +1,19 @@
 # Statis internal runtime settings 
-[settings.degen]
+[degen]
 enable_html_in_markdown = true 
-
-# TODO this is currently not being used right now, just to show toml config structure 
-printWarningHeaderPropertyNotFound = true    
-printWarningHeaderPropertyNoRules = true
+warn_page_property_loads_default = false    
+warn_page_property_no_validation_rule = false
+log_write_rendered_html = false
 
 # Pages are the quick files a user can write to be generated 
-[settings.pages]
+[project]
 domain_url = "http://127.0.0.1:5500" # used for vscode liveserver 
 source_path = "source/"
 export_path = "export/"
 
 # source directory = export dir
 # will pass through all non .md files
-[settings.passthrough]
+[project.passthrough]
 "source/css/" = "export/css/"
 
 # Page Types (Types of Content to Generate into a final html file)

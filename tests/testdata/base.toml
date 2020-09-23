@@ -1,18 +1,19 @@
 # Statis internal runtime settings 
-[settings.degen]
-# TODO this is currently not being used right now, just to show toml config structure 
-printWarningHeaderPropertyNotFound = true    
-printWarningHeaderPropertyNoRules = true
+[degen]
+enable_html_in_markdown = true 
+warn_page_property_loads_default = false    
+warn_page_property_no_validation_rule = false
+log_write_rendered_html = false
 
 # Pages are the quick files a user can write to be generated 
-[settings.pages]
+[project]
 domain_url = "http://127.0.0.1"
 source_path = 'source/'
 export_path = "export/"
 
 # source directory = export dir
 # will pass through all non .md files
-[settings.passthrough]
+[project.passthrough]
 "demo/img/" = "demo_export/img/"
 "demo/css/" = "demo_export/css/"
 

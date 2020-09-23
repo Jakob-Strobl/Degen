@@ -14,11 +14,13 @@ export module Util {
         return decoder.decode(await Deno.readFile(absolute_path));
     }
 
-    export async function writePage(utf8: string, page: Pages.Page ) {
+    export async function writePage(utf8: string, page: Pages.Page, degen_settings: Degen.DegenSettings) {
         const export_dir = page.getExportDirname();
         const export_path = page.get('export_path');
         ensureDirSync(export_dir);
-        console.log(`writing file to: ${export_path} via ${export_dir}`);
+        if (degen_settings.log_write_rendered_html) {
+            console.log(`writing file to: ${export_path} via ${export_dir}`);
+        }
 
         const encoder = new TextEncoder();
         const data = encoder.encode(utf8);
@@ -78,6 +80,16 @@ export module Util {
             }
         }
             
+        return config;
+    }
+
+    export function getProjectConfigSync() {
+        if (!config) {
+            throw new Degen.DegenError(
+                "U101",
+                "Project config does not exist");
+        }
+
         return config;
     }
 }

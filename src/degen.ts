@@ -39,16 +39,17 @@ async function generate(project_config_path: string) {
     // Initialization - read in config file and instantiate required functionality 
     const config = await Util.openProjectConfig(project_config_path);
     const markit = markit_mod({
-        html: config.settings.degen.enable_html_in_markdown,    // Enable HTML tags in source
+        html: config.degen.enable_html_in_markdown,    // Enable HTML tags in source
     });
 
     // Find all the pages in the directories declared in statis.toml - settings.pages
-    const source_directory = Deno.realPathSync(config.settings.pages.source_path);
+    const source_directory = Deno.realPathSync(config.project.source_path);
     const page_entries = Util.getSetOfAllPageEntries([source_directory]);
     const page_render_queue = new Array<Pages.Page>();
     const compendium = new Pages.Compendium();
 
     // Read in all the pages
+    console.log("Preparing Pages...")
     try {
         for await (const page of page_entries) {
             const page_text = await Util.readFile(page)
@@ -67,24 +68,27 @@ async function generate(project_config_path: string) {
     // console.log(compendium.toString());
 
     // Copy Passthrough
-    for (const src_dir in config.settings.passthrough) {
-        const dest_dir = config.settings.passthrough[src_dir];
-        console.log(`Passing ${src_dir} to ${dest_dir}`);
+    for (const src_dir in config.project.passthrough) {
+        const dest_dir = config.project.passthrough[src_dir];
+        console.log(`Copying '${src_dir}' to '${dest_dir}'`);
         ensureDirSync(dest_dir);
         copySync(src_dir, dest_dir, {overwrite: true});
     }
 
     // Render all public pages :D
+    console.log("Rendering...")
     try {
         for (const page of page_render_queue) {
             const plated_markdown = Temple.renderString(page.markdown(), page, compendium);
             page.setBody(markit.render(plated_markdown));
             const html = await Temple.render(page, compendium);
-            await Util.writePage(html, page);
+            await Util.writePage(html, page, config.degen);
         }
     } catch (e) {
         console.log(e);
     }
+
+    console.log(`Site Rendered to ${Deno.realPathSync(config.project.export_path)}`);
 }
 
 main();
