@@ -78,7 +78,8 @@ Deno.test({
             template: "source/simple_template.html",
             date: new Date("2020-09-18T14:23:28.094Z"),
             export_path: "C:/Users/jakob/OneDrive/Desktop/github/Degen/tests/testdata/export/post.html",
-            url: "/post.html"
+            domain_url: "http://127.0.0.1",
+            url: "http://127.0.0.1/post.html"
         };
         
         const config = await Util.openProjectConfig(Path.resolve(testdataDir, "base.toml"));

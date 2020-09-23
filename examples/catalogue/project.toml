@@ -8,6 +8,7 @@ printWarningHeaderPropertyNoRules = true
 
 # Pages are the quick files a user can write to be generated 
 [settings.pages]
+domain_url = "http://127.0.0.1:5500" # used for vscode liveserver 
 source_path = "source/"
 export_path = "export/"
 

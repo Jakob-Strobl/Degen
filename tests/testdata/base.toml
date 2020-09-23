@@ -6,6 +6,7 @@ printWarningHeaderPropertyNoRules = true
 
 # Pages are the quick files a user can write to be generated 
 [settings.pages]
+domain_url = "http://127.0.0.1"
 source_path = 'source/'
 export_path = "export/"
 
