@@ -82,6 +82,7 @@ export module Pages {
         header["page_path"] = page_absolute_path;
         header["page_type"] = page_type;
         header["markdown"] = markdown;
+        header["domain_url"] = config.settings.pages.domain_url;
         try {
             // If path doesnt exist, throws OS error
             header["base_source_path"] = Deno.realPathSync(config.settings.pages.source_path);
@@ -96,6 +97,7 @@ export module Pages {
             // If path doesnt exist, throws OS error
             header["base_export_path"] = Deno.realPathSync(config.settings.pages.export_path);
         } catch (e) {
+            console.log(e);
             throw new PageError(
                 "P105",
                 `Project Config's 'export_path' could not be found: ${config.settings.pages.export_path}`,
@@ -237,7 +239,7 @@ export module Pages {
                 }
 
                 default: {
-                    console.warn(`WARN: In ${this._data.page_type.toUpperCase()} - '${page_path}', the key "${key}" has no rules for parsing.\n\tYou can add a rule in lib.ts - PageHeader.validateHeaderProperty()\n`);
+                    console.warn(`WARN: In ${this._data.page_type.toUpperCase()} - '${page_path}', the key "${key}" ${this.get(key)} has no rules for parsing.\n\tYou can add a rule in lib.ts - PageHeader.validateHeaderProperty()\n`);
                     break;
                 }
             }
@@ -259,7 +261,7 @@ export module Pages {
                 const export_path = this.get('export_path');
                 const paths = export_path.split(base_path);
                 if (paths.length === 2) {
-                    this.set('url', paths[1]);
+                    this.set('url', `${this.get('domain_url')}${paths[1]}`);
                 } else {
                     throw new PageError(
                         "P401",
@@ -353,7 +355,6 @@ export module Pages {
                 // equal
                 return 0;
             });
-
 
             return new PageCollection(this.group.concat(".sort()"), sorted);
         }

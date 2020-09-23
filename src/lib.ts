@@ -15,6 +15,7 @@ export interface DegenSettings {
 }
 
 export interface PageSettings {
+    domain_url: string;
     source_path: string;
     export_path: string;
 }
