@@ -30,8 +30,8 @@ export module Temple {
         expression: /^(?<collection>\w+)([^.]*)?\.(?<func>((\n|\r|.)*))/,
     }
 
-    async function readInTemplate(file_path: string) : Promise<string>  {
-        return await Util.readFile(file_path);
+    async function readInTemplate(path: Degen.DegenPath) : Promise<string>  {
+        return await Util.readFile(path);
     }
 
     export function renderString(template: string, page: Pages.Page, compendium: Pages.Compendium)  {
@@ -51,7 +51,7 @@ export module Temple {
                         return var_data;
                     }
                 } else { 
-                    throw new TemplateVariableUndefined(variable, page.get('page_path'), page.get('template'));
+                    throw new TemplateVariableUndefined(variable, page.get('path'), page.get('template'));
                 }
             }
 
@@ -65,7 +65,7 @@ export module Temple {
                     throw new TemplateError(
                         "T300",
                         "Template Expression Regex did not match for named groups",
-                        page.get('page_path'),
+                        page.get('path'),
                         page.get('template')
                     );
                 }

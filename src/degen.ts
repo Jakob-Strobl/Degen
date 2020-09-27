@@ -5,14 +5,14 @@ import { ensureDirSync, copySync } from "https://deno.land/std@0.69.0/fs/mod.ts"
 import { Util } from "./util.ts";
 import { Pages } from "./pages.ts"
 import { Temple } from "./temple.ts";
-import { DegenError } from "./lib.ts";
+import { DegenError, DegenPath } from "./lib.ts";
 
 async function main() {
     try {
         if (Deno.args.length === 1) {
             let path;
             try {
-                path = Deno.realPathSync(Deno.args[0]);
+                path = new DegenPath(Deno.args[0]);
             } catch (e: unknown) {
                 throw new DegenError(
                     "D100",
@@ -30,7 +30,7 @@ async function main() {
     }
 }
 
-async function generate(project_config_path: string) {
+async function generate(project_config_path: DegenPath) {
     // I dont like that I need a pseudo require() to mimick node.js importing D: 
     // But im glad node modules are supported
     const require = createRequire(import.meta.url);
@@ -45,13 +45,19 @@ async function generate(project_config_path: string) {
     // Find all the pages in the directories declared in statis.toml - settings.pages
     const source_directory = Deno.realPathSync(config.project.source_path);
     const page_entries = Util.getSetOfAllPageEntries([source_directory]);
+    const page_paths = new Array<DegenPath>();
+    page_entries.forEach((entry) => {
+        page_paths.push(new DegenPath(entry));
+    })
+
+    // Prep page representation for render phase
     const page_render_queue = new Array<Pages.Page>();
     const compendium = new Pages.Compendium();
 
     // Read in all the pages
     console.log("Preparing Pages...")
     try {
-        for await (const page of page_entries) {
+        for await (const page of page_paths) {
             const page_text = await Util.readFile(page)
             const statis_page = Pages.parsePage(page_text, page, config);
 
