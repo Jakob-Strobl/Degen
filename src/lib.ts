@@ -1,3 +1,5 @@
+import * as Path from "https://deno.land/std@0.69.0/path/mod.ts";
+
 export interface ProjectConfig {
     degen: DegenSettings;
     project: ProjectSettings;
@@ -26,10 +28,38 @@ export interface StringIndexableObject<T> {
     [key: string]: T;
 }
 
+export interface PathData {
+    full_path: string;
+    dir: string;
+    file: string;
+    ext: string;
+    name: string;
+}
+
 export class DegenError extends Error {
     constructor(error_code: string, msg?: string, source?: string) {
         super(`[${error_code}] ${msg} >> ${source}`);
         this.name = "DegenError";
+    }
+}
+
+export class DegenPath implements PathData {
+    full_path: string;
+    dir: string;
+    file: string;
+    ext: string;
+    name: string;
+
+    constructor(path: string) {
+        try {
+            this.full_path = Deno.realPathSync(path);
+        } catch (e) {
+            this.full_path = path;
+        }
+        this.dir = Path.dirname(this.full_path);
+        this.file = Path.basename(this.full_path);
+        this.ext = Path.extname(this.full_path);
+        this.name = this.file.replace(this.ext, "");
     }
 }
 
