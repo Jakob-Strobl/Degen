@@ -359,7 +359,7 @@ export module Pages {
                 return 0;
             });
 
-            return new PageCollection(this.group.concat(".sort()"), sorted);
+            return new SortedPageCollection(this.group.concat(".sort()"), sorted);
         }
 
         // Take the first <num> items in the array
@@ -451,12 +451,27 @@ export module Pages {
 
             return str;
         }
+
+        head(num=1) {
+            throw new PageError('P500', "head() is not useable for an unordered page collection", this.group);
+        }
+
+        tail(num=1) {
+            throw new PageError('P501', "tail() is not useable for an unordered page collection", this.group);
+        }
     }
 
-    // TODO Worth implementing? Good use case??
     export class SortedPageCollection extends PageCollection {
-        // TODO implement ???
+        head(num=1) {
+            return new SortedPageCollection(this.group.concat('.head()'), this.pages.slice(0,num));
+        }
+
+        tail(num=1) {
+            const size = this.pages.length;
+            return new SortedPageCollection(this.group.concat('.tail()'), this.pages.slice(size-num));
+        }
         
+        // TODO I will be updating the execution environment in the future, so lets not touch this for now.
         next(reference: Page, num=1) {
         }
 
