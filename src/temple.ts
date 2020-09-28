@@ -17,6 +17,18 @@ export class TemplateVariableUndefined extends TemplateError {
     }
 }
 
+export class TemplateExpressionRuntimeError extends TemplateError {
+    constructor(runtime_error: Error, page: Degen.DegenPath, template: Degen.DegenPath) {
+        super(
+            "T301", 
+            `Error thrown during template expression runtime:\n[[  ${runtime_error}  ]]`,
+            page,
+            template
+        );
+        this.name = "TemplateExpressionRuntimeError";
+    }
+}
+
 export interface TempleConfig {
     template_variable_decleration: RegExp;
     template_expression_decleration: RegExp;
@@ -82,8 +94,12 @@ export module Temple {
                 );
                 
                 // Call dynamic function to render
-                const out : string = renderExpression(compendium, collection, page);
-                return out;
+                try {
+                    const out : string = renderExpression(compendium, collection, page);
+                    return out;
+                } catch (e) {
+                    throw new TemplateExpressionRuntimeError(e, page.get('path'), page.get('template'));
+                }
             }
 
             let output = template;
