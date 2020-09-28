@@ -4,15 +4,16 @@ import { Pages } from "./pages.ts";
 
 // Template Errors
 export class TemplateError extends Degen.DegenError {
-    constructor(error_code: string, msg: string, page: string, template: string) {
-        super(error_code, msg, `${page} via ${template}`);
+    constructor(error_code: string, msg: string, page: Degen.DegenPath, template: Degen.DegenPath) {
+        super(error_code, msg, `${page.full_path} via ${template.full_path}`);
         this.name = "TemplateError";
     }
 }
 
 export class TemplateVariableUndefined extends TemplateError {
-    constructor(template_variable: string, page: string, template: string) {
+    constructor(template_variable: string, page: Degen.DegenPath, template: Degen.DegenPath) {
         super("T200", `Template Variable '${template_variable}', binds to an undefined property`, page, template);
+        this.name = "TemplateVariableUndefined";
     }
 }
 
@@ -93,7 +94,6 @@ export module Temple {
 
             return output;
         }
-
         return render(page);
     }
 
