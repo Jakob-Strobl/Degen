@@ -169,7 +169,7 @@ export module Pages {
         }
 
         /**
-         * Makes sure a Page is ready to go
+         * Makes sure a Page is ready to go:
          *  1. Loads default values defined in project config based on page type -> populateDefaultProperties()
          *  2. Checks each property passes its ruleset (if that property has a ruleset defined) -> validateHeaderProperty()
          *  3. Determines some extra internal properties based on existing/required properties -> inferProperties()
@@ -198,9 +198,9 @@ export module Pages {
         }
 
         /**
-         * Populate 
-         * @param defaults 
-         * @param degen_settings 
+         * Populate this pages properties with default values via a defualt table
+         * @param defaults object containing default page key-value pairs 
+         * @param degen_settings set log level of warnings via project config 
          */
         private populateDefaultProperties(defaults: any, degen_settings: Degen.DegenSettings) {
             // Load default values if property is empty

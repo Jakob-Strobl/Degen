@@ -7,6 +7,10 @@ import { Util } from "./util.ts";
 import { Pages } from "./pages.ts"
 import { Temple } from "./temple.ts";
 
+/**
+ * This is variable will provide access to getProjectHints() when it is set up correctly.
+ * If an error is thrown that this is not a function, that means you tried to call this function before openProjectConfig() completed
+ */
 export let getProjectHints: Function;
 
 /**
@@ -27,6 +31,7 @@ function setProjectHints(source_path: string, export_path: string, domain_url: s
         return project_hints;
     }
 
+    // return access to the getter function 
     return getProjectHints;
 }
 
@@ -40,6 +45,7 @@ export async function openProjectConfig(path: Degen.DegenPath) {
     console.log(`Changing working directory to project config ${path.dir}`);
     Deno.chdir(path.dir);
 
+    // set the getter function of the closure to the global variable 
     getProjectHints = setProjectHints(config.project.source_path, config.project.export_path, config.project.domain_url);
     return config;
 } 

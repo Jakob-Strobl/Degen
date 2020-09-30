@@ -38,9 +38,12 @@ export interface TempleConfig {
 // Temple - Template Engine
 export module Temple {
     const regexs: TempleConfig = {
+        // Match for template variable:     !{ <variable> }
         template_variable_decleration: /!{(?!\{)\s*(\w+)(\..+?)?\s*}/g,
+        // Match for template expression:   !{{ <expression> }}
         template_expression_decleration: /\!{{((\r|\n|.)+?)}}/g,
-        expression: /^(?<collection>\w+)([^.]*)?\.(?<func>((\n|\r|.)*))/,
+        // Match parts of the expression:   <collection>.<fns>
+        expression: /^(?<collection>\w+)([^.]*)?\.(?<fns>((\n|\r|.)*))/,
     }
 
     async function readInTemplate(path: Degen.DegenPath) : Promise<string>  {
@@ -86,9 +89,11 @@ export module Temple {
              * Parse and evaluate template expressions
              * @param match unused
              * @param expr1 the template expression we want to match and evaluate 
+             * @throws TemplateError if we could not match parts of the expressions
+             * @throws TemplateExpressionRuntimeError thrown if an error is thrown during the dynamicallt created template expression runtime 
              */
-            function parseTemplateExpressions(match: any, expr1: string) {
-                let expr = expr1.trim();
+            function parseTemplateExpressions(match: any, expr_found: string) {
+                let expr = expr_found.trim();
 
                 // Parse the expression into groups
                 const expr_regex = regexs.expression;
@@ -104,12 +109,12 @@ export module Temple {
 
                 // Create dynamic function to execute
                 const collection = m.groups.collection;
-                const funcs = m.groups.func; 
+                const fns = m.groups.fns; 
                 const renderExpression = new Function(
                     "compendium",
                     "collection",
                     "current_page", 
-                    `return compendium.get(collection).${funcs};`
+                    `return compendium.get(collection).${fns};`
                 );
                 
                 // Call dynamic function to render
