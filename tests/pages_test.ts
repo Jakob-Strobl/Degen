@@ -6,9 +6,10 @@ import {
 } from "https://deno.land/std/testing/asserts.ts";
 import * as Path from "https://deno.land/std@0.69.0/path/mod.ts";
 
+import { openProjectConfig } from "../src/degen.ts";
 import { DegenPath } from "../src/lib.ts";
 import { Util } from "../src/util.ts";
-import { Pages } from "../src/pages.ts"
+import { Pages } from "../src/pages.ts";
 
 const moduleDir = Path.dirname(Path.fromFileUrl(import.meta.url));
 const testdataDir = Path.resolve(moduleDir, "testdata");
@@ -17,11 +18,11 @@ const original_dir = Deno.realPathSync(Deno.cwd());
 Deno.test({
     name: "Pages - Create Page from Empty Page",
     fn: async () => {
-        const config = await Util.openProjectConfig(new DegenPath(Path.resolve(testdataDir, "base.toml")));
+        await openProjectConfig(new DegenPath(Path.resolve(testdataDir, "base.toml")));
         const page_content = await Util.readFile(new DegenPath(Path.join(testdataDir, "source/post_empty.md")));
 
         await assertThrowsAsync(async () => {
-            const page = Pages.parsePage(page_content, new DegenPath('source/post_empty.md'), config);
+            const page = Pages.parsePage(page_content, new DegenPath('source/post_empty.md'));
             console.log(page.getData());
         },
         Pages.PageError,
@@ -34,11 +35,11 @@ Deno.test({
 Deno.test({
     name: "Pages - Create Page from Page with no header",
     fn: async () => {
-        const config = await Util.openProjectConfig(new DegenPath(Path.resolve(testdataDir, "base.toml")));
+        await openProjectConfig(new DegenPath(Path.resolve(testdataDir, "base.toml")));
         const page_content = await Util.readFile(new DegenPath(Path.join(testdataDir, "source/post_no_header.md")));
 
         await assertThrowsAsync(async () => {
-            const page = Pages.parsePage(page_content, new DegenPath('source/post_no_header.md'), config);
+            const page = Pages.parsePage(page_content, new DegenPath('source/post_no_header.md'));
             console.log(page.getData());
         },
         Pages.PageError,
@@ -72,42 +73,39 @@ Deno.test({
     name: "Pages - Create a Page",
     fn: async () => {
         const expected_data = {
-            path: {
+            path: <DegenPath> {
                 dir: "C:/Users/jakob/OneDrive/Desktop/github/Degen/tests/testdata/source",
                 ext: ".md",
                 file: "post.md",
                 full_path: "C:/Users/jakob/OneDrive/Desktop/github/Degen/tests/testdata/source/post.md",
                 name: "post",
             },
-            template: {
+            template: <DegenPath> {
                 dir: "C:/Users/jakob/OneDrive/Desktop/github/Degen/tests/testdata/source",
                 ext: ".html",
                 file: "simple_template.html",
                 full_path: "C:/Users/jakob/OneDrive/Desktop/github/Degen/tests/testdata/source/simple_template.html",
                 name: "simple_template",
             },
-            export_path: {
+            export_path: <DegenPath> {
                 dir: "C:/Users/jakob/OneDrive/Desktop/github/Degen/tests/testdata/export",
                 ext: ".html",
                 file: "post.html",
                 full_path: "C:/Users/jakob/OneDrive/Desktop/github/Degen/tests/testdata/export/post.html",
                 name: "post",
             },
-            project_export_path: "C:/Users/jakob/OneDrive/Desktop/github/Degen/tests/testdata/export",
-            project_source_path: "C:/Users/jakob/OneDrive/Desktop/github/Degen/tests/testdata/source",
             is_public: true,
             title: "I am a post",
             page_type: "post",
             markdown:  "\r\n# Header 1\r\n\r\nHI This is another header\r\n\r\n## Header 2\r\n\r\nHtml paragraph is here.\r\n\r\n### Footer - H3\r\n",
             date: new Date("2020-09-18T14:23:28.094Z"),
-            domain_url: "http://127.0.0.1",
             url: "http://127.0.0.1/post.html"
         };
         
-        const config = await Util.openProjectConfig(new DegenPath(Path.resolve(testdataDir, "base.toml")));
+        await openProjectConfig(new DegenPath(Path.resolve(testdataDir, "base.toml")));
         const markdown_page = await Util.readFile(new DegenPath(Path.join(testdataDir, "source/post.md")));
 
-        const page = Pages.parsePage(markdown_page, new DegenPath(Deno.realPathSync('source/post.md')), config);
+        const page = Pages.parsePage(markdown_page, new DegenPath(Deno.realPathSync('source/post.md')));
         assertEquals(page.getData(), expected_data);
     }
 });

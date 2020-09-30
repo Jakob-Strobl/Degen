@@ -2,6 +2,7 @@ import * as Path from "https://deno.land/std@0.69.0/path/mod.ts";
 import { parse as parseToml } from "https://deno.land/std@0.69.0/encoding/toml.ts";
 
 import * as Degen from "./lib.ts"; 
+import { getProjectHints } from "./degen.ts";
 import { Util } from "./util.ts";
 
 const INDEX_OF_TOML_HEADER = 1;
@@ -38,7 +39,7 @@ export module Pages {
         }
     }
 
-    export function parsePage(page_text: string, path: Degen.DegenPath, config: Degen.ProjectConfig) : Pages.Page {
+    export function parsePage(page_text: string, path: Degen.DegenPath) : Pages.Page {
         if (page_text.length === 0) {
             throw new PageError(
                 "P101",
@@ -47,7 +48,7 @@ export module Pages {
         }
 
         const {toml_header, markdown} = splitTomlHeaderAndMarkdown(page_text, path);
-        const page = Pages.createPage(toml_header, path, markdown, config);
+        const page = Pages.createPage(toml_header, path, markdown);
         return page
     }
 
@@ -69,7 +70,7 @@ export module Pages {
 
     // TODO add documentation for this function 
     // TODO refactor path and name into one of Deno's file path objects 
-    export function createPage(toml_header: Degen.StringIndexableObject<any>, path: Degen.DegenPath, markdown: string, config: Degen.ProjectConfig) : Page  {
+    export function createPage(toml_header: Degen.StringIndexableObject<any>, path: Degen.DegenPath, markdown: string) : Page  {
         if (Object.keys(toml_header).length !== 1) {
             throw new PageError(
                 "P103", 
@@ -82,30 +83,7 @@ export module Pages {
         header["path"] = path;
         header["page_type"] = page_type;
         header["markdown"] = markdown;
-        header["domain_url"] = config.project.domain_url;
-
-        // TODO remove base_source_path and base_export_path from every page
-        try {
-            // If path doesnt exist, throws OS error
-            header["project_source_path"] = Deno.realPathSync(config.project.source_path);
-        } catch (e) {
-            throw new PageError(
-                "P104",
-                `Project Config's 'source_path' could not be found - ${config.project.source_path}`,
-                path.full_path
-            )
-        }
-        try {
-            // If path doesnt exist, throws OS error
-            header["project_export_path"] = Deno.realPathSync(config.project.export_path);
-        } catch (e) {
-            console.log(e);
-            throw new PageError(
-                "P105",
-                `Project Config's 'export_path' could not be found: ${config.project.export_path}`,
-                path.full_path
-            )
-        }
+        
         const page = new Page(header);
         return page;
     }
@@ -151,8 +129,8 @@ export module Pages {
 
         getRelativeSourcePath() {
             const file_path = this.get('path').full_path;
-            const base_path = this.get('project_source_path');
-            const leftover_path = file_path.split(base_path);
+            const base_path : Degen.ProjectHints = getProjectHints(); //this.get('project_source_path');
+            const leftover_path = file_path.split(base_path.source.full_path);
             if (leftover_path.length !== 2) {
                 throw new PageError(
                     "P201",
@@ -251,8 +229,9 @@ export module Pages {
         private inferProperties() {
             // This syntax might look a little weird but its to encapsulate the variable namespace
             const relative_source_path = this.getRelativeSourcePath();
+            const project_hints : Degen.ProjectHints = getProjectHints();
             { // export path - match the same file structure as the source
-                const path = this.get('project_export_path') + relative_source_path.replace('.md', '.html')
+                const path =  project_hints.export.full_path + relative_source_path.replace('.md', '.html')
                 this.set('export_path', new Degen.DegenPath(path)); // Replace file extension with .html 
             }
             { // Tempalte path - convert to DegenPath
@@ -260,11 +239,10 @@ export module Pages {
                 this.set('template', new Degen.DegenPath(path));
             }
             { // URL
-                const project_path = this.get('project_export_path');
                 const export_path = this.get('export_path').full_path;
-                const paths = export_path.split(project_path);
+                const paths = export_path.split(project_hints.export.full_path);
                 if (paths.length === 2) {
-                    this.set('url', `${this.get('domain_url')}${paths[1]}`);
+                    this.set('url', `${project_hints.domain_url}${paths[1]}`);
                 } else {
                     throw new PageError(
                         "P401",

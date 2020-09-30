@@ -21,7 +21,8 @@ export interface ProjectSettings {
 }
 
 export interface PageTypes {
-    [key: string]: StringIndexableObject<any>; // Custom PageTypes 
+    default: StringIndexableObject<any>         // The use needs to define at least a default type 
+    [key: string]: StringIndexableObject<any>;  // Custom PageTypes 
 }
 
 export interface StringIndexableObject<T> {
@@ -34,6 +35,12 @@ export interface PathData {
     file: string;
     ext: string;
     name: string;
+}
+
+export interface ProjectHints {
+    source: DegenPath;
+    export: DegenPath;
+    domain_url: string;
 }
 
 export class DegenError extends Error {
@@ -62,4 +69,3 @@ export class DegenPath implements PathData {
         this.name = this.file.replace(this.ext, "");
     }
 }
-

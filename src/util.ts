@@ -5,7 +5,6 @@ import { ensureDirSync } from "https://deno.land/std@0.69.0/fs/mod.ts"
 import * as Degen from "./lib.ts";
 import { Pages } from "./pages.ts";
 
-
 export module Util {    
     let config: Degen.ProjectConfig | null = null;
 
@@ -58,14 +57,6 @@ export module Util {
         return page_entries;
     }
 
-    export async function openProjectConfig(path: Degen.DegenPath) {
-        const config = await getProjectConfig(path);
-        console.log(`Changing working directory to project config ${path.dir}`);
-        Deno.chdir(path.dir);
-
-        return config;
-    } 
-
     export async function getProjectConfig(path?: Degen.DegenPath) : Promise<Degen.ProjectConfig> {
         if (!config) {
             if (!path) {
@@ -80,14 +71,14 @@ export module Util {
             
         return config;
     }
-
+    
     export function getProjectConfigSync() {
         if (!config) {
             throw new Degen.DegenError(
                 "U101",
                 "Project config does not exist");
         }
-
+    
         return config;
     }
 }
