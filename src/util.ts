@@ -8,11 +8,21 @@ import { Pages } from "./pages.ts";
 export module Util {    
     let config: Degen.ProjectConfig | null = null;
 
+    /**
+     * Read file in by its path
+     * @param path 
+     */
     export async function readFile(path: Degen.DegenPath) : Promise<string> {
         const decoder = new TextDecoder("utf-8");
         return decoder.decode(await Deno.readFile(path.full_path));
     }
 
+    /**
+     * Write a file by its path,
+     * @param utf8 the content to render 
+     * @param page The page we want to write (used to get export path)
+     * @param degen_settings set log level via project config 
+     */
     export async function writePage(utf8: string, page: Pages.Page, degen_settings: Degen.DegenSettings) {
         const export_path = <Degen.DegenPath> page.get('export_path');
         ensureDirSync(export_path.dir);
@@ -25,6 +35,10 @@ export module Util {
         await Deno.writeFile(export_path.full_path, data);
     }
 
+    /**
+     * Recursive function that finds a set of all markdown files inside directories and their child directories 
+     * @param directory_paths directories we want to search through 
+     */
     export function getSetOfAllPageEntries(directory_paths: Array<string>) {
         let page_entries = new Set<string>();
         directory_paths = directory_paths.map((dir) => Deno.realPathSync(dir));
@@ -57,6 +71,11 @@ export module Util {
         return page_entries;
     }
 
+    /**
+     * Get the project config asynchronously 
+     * @param path path to project config  
+     * @throws DegenError if config is not found and no path is given 
+     */
     export async function getProjectConfig(path?: Degen.DegenPath) : Promise<Degen.ProjectConfig> {
         if (!config) {
             if (!path) {
@@ -72,6 +91,10 @@ export module Util {
         return config;
     }
     
+    /**
+     * Get the project config synchronously 
+     * @throws DegenError if project config has not been opened
+     */
     export function getProjectConfigSync() {
         if (!config) {
             throw new Degen.DegenError(

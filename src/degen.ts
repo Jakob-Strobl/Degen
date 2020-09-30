@@ -9,7 +9,13 @@ import { Temple } from "./temple.ts";
 
 export let getProjectHints: Function;
 
-// Trying out closures keeping the project's source and export paths 
+/**
+ * set project hints to a global variable wrapped in a closure via a get function 
+ * Project hints are properties that are the same across all pages: 
+ * @param source_path Project source path 
+ * @param export_path Project export path
+ * @param domain_url Project domain url 
+ */
 function setProjectHints(source_path: string, export_path: string, domain_url: string) : Function {
     const project_hints: Degen.ProjectHints = {
         source: new Degen.DegenPath(source_path),
@@ -24,6 +30,11 @@ function setProjectHints(source_path: string, export_path: string, domain_url: s
     return getProjectHints;
 }
 
+/**
+ * Open project config file and changes working directory to the same directory as the project config file 
+ * @param path path to file
+ * @returns Project Config JS object 
+ */
 export async function openProjectConfig(path: Degen.DegenPath) {
     const config = await Util.getProjectConfig(path);
     console.log(`Changing working directory to project config ${path.dir}`);
@@ -33,6 +44,10 @@ export async function openProjectConfig(path: Degen.DegenPath) {
     return config;
 } 
 
+/**
+ * The heart and soul of Degen - this is the whole SSG pipeline
+ * @param project_config_path Path to project config file 
+ */
 async function generate(project_config_path: Degen.DegenPath) {
     // I dont like that I need a pseudo require() to mimick node.js importing D: 
     // But im glad node modules are supported
@@ -88,7 +103,7 @@ async function generate(project_config_path: Degen.DegenPath) {
     try {
         for (const page of page_render_queue) {
             const plated_markdown = Temple.renderString(page.markdown(), page, compendium);
-            page.setBody(markit.render(plated_markdown));
+            page.set('body', markit.render(plated_markdown));
             const html = await Temple.render(page, compendium);
             await Util.writePage(html, page, config.degen);
         }

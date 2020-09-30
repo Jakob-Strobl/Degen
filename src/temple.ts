@@ -47,8 +47,22 @@ export module Temple {
         return await Util.readFile(path);
     }
 
+    /**
+     * render a template string using a Page and the Compendium 
+     * @param template      the template we are using to render (may contain template variables and template expressions)
+     * @param page          The current page we are rendering with
+     * @param compendium    access to all other PageCollections if needed (used in template expressions)
+     */
     export function renderString(template: string, page: Pages.Page, compendium: Pages.Compendium)  {
         function render(page: Pages.Page) {
+            /**
+             * parse and evaluate template variables in the template string and match to properties in the given Page context 
+             * @param match     unused
+             * @param variable  match to variable name
+             * @param calls     function calls used on the matched variable 
+             * @returns serializeable data that matches the variable 
+             * @throws TemplateVairableUndefined if the variable does not match to a Page Property 
+             */
             function parseTemplateVariables(match: any, variable: string, calls?: string) : string {
                 variable = variable.trim();
                 if (variable in page.getData()) {
@@ -68,6 +82,11 @@ export module Temple {
                 }
             }
 
+            /**
+             * Parse and evaluate template expressions
+             * @param match unused
+             * @param expr1 the template expression we want to match and evaluate 
+             */
             function parseTemplateExpressions(match: any, expr1: string) {
                 let expr = expr1.trim();
 
@@ -113,8 +132,13 @@ export module Temple {
         return render(page);
     }
 
-    export async function render(page_data: Pages.Page, compendium: Pages.Compendium) {
-        const template = await readInTemplate(page_data.get('template')); 
-        return renderString(template, page_data, compendium);
+    /**
+     * Render a Page (get's tamplate via page property)
+     * @param page The current page context for rendering (i.e. the page we want to render)
+     * @param compendium The compendium we are using for access to PageCollections
+     */
+    export async function render(page: Pages.Page, compendium: Pages.Compendium) {
+        const template = await readInTemplate(page.get('template')); 
+        return renderString(template, page, compendium);
     }
 }

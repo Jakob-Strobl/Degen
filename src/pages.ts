@@ -39,6 +39,11 @@ export module Pages {
         }
     }
 
+    /**
+     * Given a opened file's data, strip the content into the header and the markdown body and create a page.
+     * @param page_text opened file's data
+     * @param path Path to file
+     */
     export function parsePage(page_text: string, path: Degen.DegenPath) : Pages.Page {
         if (page_text.length === 0) {
             throw new PageError(
@@ -52,6 +57,11 @@ export module Pages {
         return page
     }
 
+    /**
+     * Split the header and body 
+     * @param page_text Opened file's data
+     * @param path      Path to file
+     */
     export function splitTomlHeaderAndMarkdown(page_text: string, path: Degen.DegenPath) : Pages.MarkdownPage {
         const page_pieces =  page_text.split('---'); // 0 - empty, 1 - header, 2 - body 
         if (page_pieces.length !== 3) {
@@ -68,8 +78,14 @@ export module Pages {
         };
     }
 
-    // TODO add documentation for this function 
-    // TODO refactor path and name into one of Deno's file path objects 
+    /**
+     * Creates a Degen Page (see Pages.Page) 
+     *  - Wraps the Page Constructor to streamline page creation
+     * 
+     * @param toml_header   Toml header stripped from the top of the page's content
+     * @param path          DegenPath which points to the source location of the page's content
+     * @param markdown      The page's markdown 
+     */
     export function createPage(toml_header: Degen.StringIndexableObject<any>, path: Degen.DegenPath, markdown: string) : Page  {
         if (Object.keys(toml_header).length !== 1) {
             throw new PageError(
@@ -88,6 +104,10 @@ export module Pages {
         return page;
     }
 
+    /**
+     * PageData handles all the internal operations of keeping track, retrieving, and inferring page properties for each page.
+     *  - This is the lowest level abstraction of a page's properties
+     */
     export class PageData {
         private _data: PageDataFields;
 
@@ -99,10 +119,6 @@ export module Pages {
             this._data[key] = value;
         }
 
-        setBody(body: string) {
-            this._data.body = body;
-        }
-
         isValidKey(key: string) : boolean {
             return key in this._data;
         }
@@ -111,6 +127,10 @@ export module Pages {
             return Object.values(this._data);
         }
 
+        /**
+         * Get the property of a page matching the key given or throw an error 
+         * @param key the property you want
+         */
         get(key: string): any {
             // Validate input
             if (this.isValidKey(key)) {
@@ -123,10 +143,17 @@ export module Pages {
             }
         }
 
+        /**
+         * Return the raw object storing all the properties (key-value pairs) of the page 
+         */
         getData() {
             return this._data;
         }
 
+        /**
+         * Helper function: returns a string of the relative source path relative to the project config's source path
+         * @throws PageError if it can't determine the source path correctly 
+         */
         getRelativeSourcePath() {
             const file_path = this.get('path').full_path;
             const base_path : Degen.ProjectHints = getProjectHints(); //this.get('project_source_path');
@@ -141,6 +168,12 @@ export module Pages {
             return leftover_path[1];
         }
 
+        /**
+         * Makes sure a Page is ready to go
+         *  1. Loads default values defined in project config based on page type -> populateDefaultProperties()
+         *  2. Checks each property passes its ruleset (if that property has a ruleset defined) -> validateHeaderProperty()
+         *  3. Determines some extra internal properties based on existing/required properties -> inferProperties()
+         */
         finalizeHeader() {
             const config = Util.getProjectConfigSync(); // Get project config so we know to print warnings
             const page_defaults = config.pages;
@@ -164,6 +197,11 @@ export module Pages {
             this.inferProperties();
         }
 
+        /**
+         * Populate 
+         * @param defaults 
+         * @param degen_settings 
+         */
         private populateDefaultProperties(defaults: any, degen_settings: Degen.DegenSettings) {
             // Load default values if property is empty
             for (const key in defaults) {
@@ -178,8 +216,10 @@ export module Pages {
         }
 
         /**
-         * Update, validate, polish off header properties 
-         * @param key the key you want to check 
+         * Check if a given property (key) passes its defined ruleset
+         *  - if a ruleset isn't defined it will automatically pass
+         * @param key the property to check
+         * @throws PageError when a paroperty fails its ruleset 
          */
         private validateHeaderProperty(key: string, degen_settings: Degen.DegenSettings) {        
             switch (key) {
@@ -225,6 +265,8 @@ export module Pages {
         /**
          * Create more properties for the page based on existing property values
          *  - This function is destructive, so be careful
+         * 
+         * @throws PageError when a property could not be correctly inferred 
          */
         private inferProperties() {
             // This syntax might look a little weird but its to encapsulate the variable namespace
@@ -272,7 +314,10 @@ export module Pages {
         }
     }
 
-    // Intermediate representation of a page
+    /**
+     * Page is a minimal wrapper class over PageData
+     *  - An abstraction layer to ease construction of PageData and add quality of life methods to Pages
+     */
     export class Page extends PageData {
         constructor(header: Degen.StringIndexableObject<any>) {
             const page_header = <PageDataFields> {
@@ -282,7 +327,7 @@ export module Pages {
             this.finalizeHeader();
         }
 
-        // QOL Convenience functions for better template expression readability
+        // QOL Convenience methods for better template expression readability
         url() : string {
             return this.get('url');
         }
@@ -300,7 +345,9 @@ export module Pages {
         }
     }
 
-    // Intermediate Representation of a grouping of pages
+    /**
+     * PageCollections are a grouping of Pages based on some qualitative property 
+     */
     export class PageCollection {
         group: string // for easier debugging / identification 
         pages: Array<Page>
@@ -315,11 +362,22 @@ export module Pages {
             
         }
 
+        /**
+         * Add a page to the page collection
+         * 
+         * @param page 
+         */
         push(page: Page) {
             this.pages.push(page);
         }
 
-        sort(key: string, reverse=false) : PageCollection {
+        /**
+         * Sorts the page collection based on the key given
+         * @param key the property to sort by
+         * @param reverse [optional] reverse the order of the sort
+         * @returns SortedPageCollection
+         */
+        sort(key: string, reverse=false) : SortedPageCollection {
             let reverse_coef = reverse ? -1 : 1;
             let sorted;
 
@@ -340,11 +398,19 @@ export module Pages {
             return new SortedPageCollection(this.group.concat(".sort()"), sorted);
         }
 
-        // Take the first <num> items in the array
+        /**
+         * Take the first <num> items in the array
+         * @param num number of items to take
+         */
         take(num: number) : PageCollection {
             return new PageCollection(this.group.concat(".take()"), this.pages.slice(0, num));
         }
 
+        /**
+         * Find a page in the collection by its source path
+         * @param path the source path to match for 
+         * @returns PageCollection - A single page on a match, empty on no match
+         */
         find(path: string) : PageCollection {
             let page;
             
@@ -364,11 +430,20 @@ export module Pages {
             }
         }
 
+        /**
+         * Filters out the page given from the PageCollection by it's absolute source path
+         *  
+         * @param current_page the page we want to exclude
+         */
         exclude(current_page: Page) : PageCollection {
             return this.filter((page: Page) => page.get('path').full_path !== current_page.get('path').full_path);
         }
 
-        // Filter PageCollection
+        /**
+         * Filter the PageCollection using a callback 
+         * @param callback function defined in template expression 
+         * @returns filtered PageCollection
+         */
         filter(callback: Function) : PageCollection {
             const passed = [];
             for (let i = 0; i < this.pages.length; i++) {
@@ -379,7 +454,11 @@ export module Pages {
             return new PageCollection(this.group.concat(".filter()"), passed);
         }
 
-        // Maps the PageCollection in-place
+        /**
+         * Maps the PageCollection using a callback
+         * @param callback function defined in template expression
+         * @returns shallow-mapped PageCollection
+         */
         map(callback: Function) : PageCollection {
             const mapped = [];
             for (let i = 0; i < this.pages.length; i++) {
@@ -389,7 +468,11 @@ export module Pages {
             return new PageCollection(this.group.concat(".map()"), mapped);
         }
 
-        // Maps a deep-copied PageCollection 
+        /**
+         * Maps a deep-copied PageCollection using a callback 
+         * @param callback function defined in template expression
+         * @returns deep-mapped PageCollection
+         */
         mapNew(callback: Function) : PageCollection {
             const mapped = [];
             // This feels dirty but it works :P - deep copy
@@ -404,6 +487,15 @@ export module Pages {
             return new PageCollection(this.group.concat(".mapNew()"), mapped);
         }
 
+        /**
+         * Render each page using the given callback
+         * IF the PageCollection is empty:
+         *      return the fallback string
+         *      otherwise print null
+         * @param callback callback which returns a string to render to html 
+         * @param fallback fallback string to return if PageCollection is empty
+         * @returns a string to place in the rendered html file
+         */
         render(callback: Function, fallback?: string) : string {
             console.log(`Rendering group: ${this.group}`);
             if (this.pages.length > 0) {
@@ -429,16 +521,31 @@ export module Pages {
 
             return str;
         }
-
+        
+        /**
+         * This function should only be called by a SortedPageCollection
+         *  - defined here just to throw an error
+         * @param num 
+         * @throws PageError for using it on an unordered PageCollection
+         */
         head(num=1) {
             throw new PageError('P500', "head() is not useable for an unordered page collection", this.group);
         }
 
+        /**
+         * This function should only be called by a SortedPageCollection
+         *  - defined here just to throw an error
+         * @param num 
+         * @throws PageError for using it on an unordered PageCollection
+         */
         tail(num=1) {
             throw new PageError('P501', "tail() is not useable for an unordered page collection", this.group);
         }
     }
 
+    /**
+     * Just like a PageCollection, except we know its sorted, so we can provide a couple more convenient functions 
+     */
     export class SortedPageCollection extends PageCollection {
         head(num=1) {
             return new SortedPageCollection(this.group.concat('.head()'), this.pages.slice(0,num));
@@ -457,7 +564,11 @@ export module Pages {
         }
     }
 
-    // Intermediate Representation of all the collections - The entry point to all the different collections
+    /**
+     * The Compendium is essentially a collection of collections.
+     * It is used as an entry point to all the different collections
+     *  and to figure out which collection a page belongs to.
+     */
     export class Compendium {
         collections: Degen.StringIndexableObject<PageCollection>; 
 
@@ -468,7 +579,10 @@ export module Pages {
                 this.collections = <Degen.StringIndexableObject<PageCollection>> {};
         }
 
-        // Insert the page into its relevant groups
+        /**
+         * Add a page to its relevant collections
+         * @param page The page we want to add
+         */
         addPage(page: Page) {
             // Add page to its page_type collection
             // Collection name is pluralized for better readiblity
@@ -478,7 +592,11 @@ export module Pages {
             // TODO split by category? Multiple categories
         }
 
-        // If group doesnt exist it creates the group
+        /**
+         * Get a collection by name
+         *  If the collection does not exist, create a new collection and return that.
+         * @param collection The collection we want 
+         */
         get(collection: string) : PageCollection {
             if ( !(collection in this.collections) )
                 this.collections[collection] = new PageCollection(collection);
