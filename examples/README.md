@@ -18,7 +18,7 @@ To quickly get a good idea of what is going on with the example I recommend read
     - Read the type of page it is by looking at the toml table defined in the page's header
 3. Read the index.md's template and then read the other templates.
 4. Read through the rest of the markdown pages in the source directory
-    - Good to make a mentle note where data is defined and how it is accessed
+    - Make a mental notes where each page's data is defined and how it is accessed.
 
 **NOTE:** For now, I recommend reading the markdown pages using the **RAW** view on Github. It will be easier to read the page headers that way.
 

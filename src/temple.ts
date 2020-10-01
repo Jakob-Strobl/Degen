@@ -17,6 +17,10 @@ export class TemplateVariableUndefined extends TemplateError {
     }
 }
 
+/**
+ * Wrapper error for any errors thrown during template expression runtime
+ * This error contains the error thrown during runtime 
+ */
 export class TemplateExpressionRuntimeError extends TemplateError {
     constructor(runtime_error: Error, page: Degen.DegenPath, template: Degen.DegenPath) {
         super(
