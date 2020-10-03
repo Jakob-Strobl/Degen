@@ -2,7 +2,7 @@
 
 A Declarative static site generator using Deno and TypeScript
 
-## Version: **Beta 1**
+## Version: **Beta 2**
 
 Versions increment in whole numbers.  
 Degen will exit Beta probably around the time I finish my website.
@@ -45,11 +45,3 @@ Currently, we need the flags --allow-read --allow-write --allow-env.
 
 ```--allow-read & --allow-write```: Read markdown, template, and other files and write out rendered HTML files.  
 ```--allow-env```: This is used by Deno's ```require()``` (Node-compatibility interface), which is needed to use markdown-it Node module.
-
-### Current Issues
-
-- Need to clean up Error creation
-- Update my tests
-- Add more tests
-- Resolve all TODOs
-- And many more issues on my Trello board
