@@ -1,4 +1,4 @@
-# Statis internal runtime settings 
+# Degen internal runtime settings 
 [degen]
 enable_html_in_markdown = true 
 warn_page_property_loads_default = false    
